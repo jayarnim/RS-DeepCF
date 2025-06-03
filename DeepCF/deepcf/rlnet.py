@@ -57,8 +57,8 @@ class Module(nn.Module):
         return pred
 
     def _score(self, user_idx, item_idx):
-        user_slice = self.interactions[user_idx, :].clone()
-        item_slice = self.interactions.T[item_idx, :].clone()
+        user_slice = self.interactions[user_idx, :-1].clone()
+        item_slice = self.interactions.T[item_idx, :-1].clone()
 
         user_batch = torch.arange(user_idx.size(0))
         item_batch = torch.arange(item_idx.size(0))

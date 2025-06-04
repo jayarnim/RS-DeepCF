@@ -57,26 +57,49 @@ class Module(nn.Module):
         return pred
 
     def _score(self, user_idx, item_idx):
-        user_slice = self.interactions[user_idx, :-1].clone()
-        item_slice = self.interactions.T[item_idx, :-1].clone()
+        # representation learning
+        rep_user = self._user(user_idx, item_idx)
+        rep_item = self._item(user_idx, item_idx)
 
-        user_batch = torch.arange(user_idx.size(0))
-        item_batch = torch.arange(item_idx.size(0))
-
-        user_slice[user_batch, item_idx] = 0
-        item_slice[item_batch, user_idx] = 0
-
-        proj_user = self.proj_u(user_slice.float())
-        proj_item = self.proj_i(item_slice.float())
-
-        rep_user = self.mlp_u(proj_user)
-        rep_item = self.mlp_i(proj_item)
-
+        # predictive vector
         pred_vector = rep_user * rep_item
-
+        
+        # logit
         logit = self.logit_layer(pred_vector).squeeze(-1)
 
         return pred_vector, logit
+
+    def _user(self, user_idx, item_idx):
+        # get user vector from interactions
+        user_slice = self.interactions[user_idx, :-1].clone()
+        
+        # masking target items
+        user_batch = torch.arange(user_idx.size(0))
+        user_slice[user_batch, item_idx] = 0
+        
+        # projection
+        proj_user = self.proj_u(user_slice.float())
+        
+        # representation learning
+        rep_user = self.mlp_u(proj_user)
+
+        return rep_user
+
+    def _item(self, user_idx, item_idx):
+        # get item vector from interactions
+        item_slice = self.interactions.T[item_idx, :-1].clone()
+        
+        # masking target users
+        item_batch = torch.arange(item_idx.size(0))
+        item_slice[item_batch, user_idx] = 0
+        
+        # projection
+        proj_item = self.proj_i(item_slice.float())
+        
+        # representation learning
+        rep_item = self.mlp_i(proj_item)
+
+        return rep_item
 
     def _init_layers(self):
         self.proj_u = nn.Linear(

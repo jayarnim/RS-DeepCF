@@ -62,29 +62,47 @@ class Module(nn.Module):
         return pred
 
     def _score(self, user_idx, item_idx):
-        # drop padding idx
-        user_slice = self.interactions[user_idx, :-1].clone()
-        item_slice = self.interactions.T[item_idx, :-1].clone()
+        # user, item proj & bttn
+        proj_user = self._user(user_idx, item_idx)
+        proj_item = self._item(user_idx, item_idx)
 
-        user_batch = torch.arange(user_idx.size(0))
-        item_batch = torch.arange(item_idx.size(0))
-
-        user_slice[user_batch, item_idx] = 0
-        item_slice[item_batch, user_idx] = 0
-
-        proj_user = self.proj_u(user_slice.float())
-        proj_item = self.proj_i(item_slice.float())
-
+        # matching function learning
         concat = torch.cat(
             tensors=(proj_user, proj_item), 
             dim=-1
         )
-
         pred_vector = self.mlp(concat)
 
+        # logit
         logit = self.logit_layer(pred_vector).squeeze(-1)
 
         return pred_vector, logit
+
+    def _user(self, user_idx, item_idx):
+        # get user vector from interactions
+        user_slice = self.interactions[user_idx, :-1].clone()
+        
+        # masking target items
+        user_batch = torch.arange(user_idx.size(0))
+        user_slice[user_batch, item_idx] = 0
+        
+        # projection
+        proj_user = self.proj_u(user_slice.float())
+
+        return proj_user
+
+    def _item(self, user_idx, item_idx):
+        # get item vector from interactions
+        item_slice = self.interactions.T[item_idx, :-1].clone()
+        
+        # masking target users
+        item_batch = torch.arange(item_idx.size(0))
+        item_slice[item_batch, user_idx] = 0
+        
+        # projection
+        proj_item = self.proj_i(item_slice.float())
+
+        return proj_item
 
     def _init_layers(self):
         self.proj_u = nn.Linear(

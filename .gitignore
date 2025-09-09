@@ -1,2 +1,3 @@
-data/*
+_data/*
+_checkpoints/*
 **/__pycache__/

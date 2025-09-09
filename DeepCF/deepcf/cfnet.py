@@ -45,7 +45,7 @@ class Module(nn.Module):
         user_idx: (B,)
         item_idx: (B,)
         """
-        return self._score(user_idx, item_idx)
+        return self.score(user_idx, item_idx)
 
     def predict(
         self, 
@@ -57,13 +57,13 @@ class Module(nn.Module):
         item_idx: (B,)
         """
         with torch.no_grad():
-            _, logit = self._score(user_idx, item_idx)
+            logit = self.score(user_idx, item_idx)
             pred = torch.sigmoid(logit)
         return pred
 
-    def _score(self, user_idx, item_idx):
-        pred_vector_rl, _ = self.rl_net(user_idx, item_idx)
-        pred_vector_ml, _ = self.ml_net(user_idx, item_idx)
+    def score(self, user_idx, item_idx):
+        pred_vector_rl = self.rl_net.rl(user_idx, item_idx)
+        pred_vector_ml = self.ml_net.ml(user_idx, item_idx)
 
         pred_vector = torch.cat(
             tensors=(pred_vector_rl, pred_vector_ml), 
@@ -72,7 +72,7 @@ class Module(nn.Module):
 
         logit = self.logit_layer(pred_vector).squeeze(-1)
 
-        return pred_vector, logit
+        return logit
 
     def _init_layers(self):
         self.rl_net = rlnet.Module(

@@ -40,7 +40,7 @@ class Module(nn.Module):
         user_idx: (B,)
         item_idx: (B,)
         """
-        return self._score(user_idx, item_idx)
+        return self.score(user_idx, item_idx)
 
     def predict(
         self, 
@@ -52,24 +52,22 @@ class Module(nn.Module):
         item_idx: (B,)
         """
         with torch.no_grad():
-            _, logit = self._score(user_idx, item_idx)
+            logit = self.score(user_idx, item_idx)
             pred = torch.sigmoid(logit)
         return pred
 
-    def _score(self, user_idx, item_idx):
-        # representation learning
-        rep_user = self._user(user_idx, item_idx)
-        rep_item = self._item(user_idx, item_idx)
-
-        # predictive vector
-        pred_vector = rep_user * rep_item
-        
-        # logit
+    def score(self, user_idx, item_idx):
+        pred_vector = self.rl(user_idx, item_idx)
         logit = self.logit_layer(pred_vector).squeeze(-1)
+        return logit
 
-        return pred_vector, logit
+    def rl(self, user_idx, item_idx):
+        rep_user = self.user(user_idx, item_idx)
+        rep_item = self.item(user_idx, item_idx)
+        pred_vector = rep_user * rep_item
+        return pred_vector
 
-    def _user(self, user_idx, item_idx):
+    def user(self, user_idx, item_idx):
         # get user vector from interactions
         user_slice = self.interactions[user_idx, :-1].clone()
         
@@ -85,7 +83,7 @@ class Module(nn.Module):
 
         return rep_user
 
-    def _item(self, user_idx, item_idx):
+    def item(self, user_idx, item_idx):
         # get item vector from interactions
         item_slice = self.interactions.T[item_idx, :-1].clone()
         

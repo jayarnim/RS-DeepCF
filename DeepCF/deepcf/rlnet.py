@@ -103,10 +103,12 @@ class Module(nn.Module):
         self.proj_u = nn.Linear(
             in_features=self.n_items,
             out_features=self.hidden[0],
+            bias=False,
         )
         self.proj_i = nn.Linear(
             in_features=self.n_users,
             out_features=self.hidden[0],
+            bias=False,
         )
         self.mlp_u = nn.Sequential(
             *list(self._generate_layers(self.hidden))
@@ -117,6 +119,7 @@ class Module(nn.Module):
         self.logit_layer = nn.Linear(
             in_features=self.hidden[-1],
             out_features=1,
+            bias=False,
         )
 
     def _generate_layers(self, hidden):

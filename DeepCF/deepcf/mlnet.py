@@ -121,7 +121,6 @@ class Module(nn.Module):
         self.logit_layer = nn.Linear(
             in_features=self.hidden[-1],
             out_features=1,
-            bias=False,
         )
 
     def _generate_layers(self, hidden):

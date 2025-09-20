@@ -74,11 +74,11 @@ class DataSplitter:
         loaders = []
         zip_obj = zip(split_list, neg_per_pos, batch_size)
 
-        for split, neg_per_pos_per_split, batch_per_split in zip_obj:
+        for split, split_neg_per_pos, split_batch in zip_obj:
             kwargs = dict(
                 data=split, 
-                neg_per_pos=neg_per_pos_per_split, 
-                batch_size=batch_per_split, 
+                neg_per_pos=split_neg_per_pos, 
+                batch_size=split_batch, 
                 shuffle=shuffle,
             )
             loader = self.dataloader.get(**kwargs)

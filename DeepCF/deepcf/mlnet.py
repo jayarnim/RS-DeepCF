@@ -73,7 +73,7 @@ class Module(nn.Module):
             tensors=(proj_user, proj_item), 
             dim=-1
         )
-        pred_vector = self.mlp(concat)
+        pred_vector = self.mlp_layers(concat)
 
         return pred_vector
 
@@ -114,7 +114,7 @@ class Module(nn.Module):
             out_features=self.n_factors,
             bias=False,
         )
-        self.mlp = nn.Sequential(
+        self.mlp_layers = nn.Sequential(
             *list(self._generate_layers(self.hidden))
         )
         self.logit_layer = nn.Linear(

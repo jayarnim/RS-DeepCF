@@ -17,16 +17,15 @@ class Module(nn.Module):
         del self.init_args["self"]
         del self.init_args["__class__"]
 
-        # device setting
-        DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-        self.device = torch.device(DEVICE)
-
         # global attr
         self.n_users = n_users
         self.n_items = n_items
         self.hidden = hidden
         self.dropout = dropout
-        self.interactions = interactions.to(self.device)
+        self.register_buffer(
+            name="interactions", 
+            tensor=interactions,
+        )
 
         # generate layers
         self._init_layers()
@@ -70,14 +69,14 @@ class Module(nn.Module):
     def user(self, user_idx, item_idx):
         # get user vector from interactions
         user_slice = self.interactions[user_idx, :-1].clone()
-        
+
         # masking target items
         user_batch = torch.arange(user_idx.size(0))
         user_slice[user_batch, item_idx] = 0
-        
+
         # projection
         proj_user = self.proj_u(user_slice.float())
-        
+
         # representation learning
         rep_user = self.mlp_u(proj_user)
 
@@ -86,14 +85,14 @@ class Module(nn.Module):
     def item(self, user_idx, item_idx):
         # get item vector from interactions
         item_slice = self.interactions.T[item_idx, :-1].clone()
-        
+
         # masking target users
         item_batch = torch.arange(item_idx.size(0))
         item_slice[item_batch, user_idx] = 0
-        
+
         # projection
         proj_item = self.proj_i(item_slice.float())
-        
+
         # representation learning
         rep_item = self.mlp_i(proj_item)
 

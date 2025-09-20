@@ -18,17 +18,16 @@ class Module(nn.Module):
         del self.init_args["self"]
         del self.init_args["__class__"]
 
-        # device setting
-        DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-        self.device = torch.device(DEVICE)
-
         # global attr
         self.n_users = n_users
         self.n_items = n_items
         self.n_factors = n_factors
         self.hidden = hidden
         self.dropout = dropout
-        self.interactions = interactions.to(self.device)
+        self.register_buffer(
+            name="interactions", 
+            tensor=interactions,
+        )
 
         # debugging args error
         self._assert_arg_error()

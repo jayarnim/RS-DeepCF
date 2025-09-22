@@ -69,10 +69,11 @@ class Module(nn.Module):
         proj_user = self.user(user_idx, item_idx)
         proj_item = self.item(user_idx, item_idx)
 
-        concat = torch.cat(
+        kwargs = dict(
             tensors=(proj_user, proj_item), 
-            dim=-1
+            dim=-1,
         )
+        concat = torch.cat(**kwargs)
         pred_vector = self.mlp_layers(concat)
 
         return pred_vector
@@ -104,23 +105,29 @@ class Module(nn.Module):
         return proj_item
 
     def _init_layers(self):
-        self.proj_u = nn.Linear(
+        kwargs = dict(
             in_features=self.n_items,
             out_features=self.n_factors,
             bias=False,
         )
-        self.proj_i = nn.Linear(
+        self.proj_u = nn.Linear(**kwargs)
+
+        kwargs = dict(
             in_features=self.n_users,
             out_features=self.n_factors,
             bias=False,
         )
+        self.proj_i = nn.Linear(**kwargs)
+
         self.mlp_layers = nn.Sequential(
             *list(self._generate_layers(self.hidden))
         )
-        self.logit_layer = nn.Linear(
+
+        kwargs = dict(
             in_features=self.hidden[-1],
             out_features=1,
         )
+        self.logit_layer = nn.Linear(**kwargs)
 
     def _generate_layers(self, hidden):
         idx = 1

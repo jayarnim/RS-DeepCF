@@ -61,27 +61,30 @@ class Module(nn.Module):
         return pred
 
     def score(self, user_idx, item_idx):
-        pred_vector_rl = self.rl_net.rl(user_idx, item_idx)
-        pred_vector_ml = self.ml_net.ml(user_idx, item_idx)
+        pred_vector_rl = self.rl.rl(user_idx, item_idx)
+        pred_vector_ml = self.ml.ml(user_idx, item_idx)
 
-        pred_vector = torch.cat(
+        kwargs = dict(
             tensors=(pred_vector_rl, pred_vector_ml), 
             dim=-1,
         )
+        pred_vector = torch.cat(**kwargs)
 
         logit = self.logit_layer(pred_vector).squeeze(-1)
 
         return logit
 
     def _init_layers(self):
-        self.rl_net = rlnet.Module(
+        kwargs = dict(
             n_users=self.n_users,
             n_items=self.n_items,
             hidden=self.hidden_rl,
             dropout=self.dropout,
             interactions=self.interactions,
         )
-        self.ml_net = mlnet.Module(
+        self.rl = rlnet.Module(**kwargs)
+
+        kwargs = dict(
             n_users=self.n_users,
             n_items=self.n_items,
             n_factors=self.n_factors,
@@ -89,10 +92,13 @@ class Module(nn.Module):
             dropout=self.dropout,
             interactions=self.interactions,
         )
-        self.logit_layer = nn.Linear(
+        self.ml = mlnet.Module(**kwargs)
+
+        kwargs = dict(
             in_features=self.hidden_rl[-1] + self.hidden_ml[-1],
-            out_features=1,
+            out_features=1, 
         )
+        self.logit_layer = nn.Linear(**kwargs)
 
     def _generate_layers(self, hidden):
         idx = 1

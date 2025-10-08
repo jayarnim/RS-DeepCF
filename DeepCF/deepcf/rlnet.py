@@ -57,53 +57,52 @@ class Module(nn.Module):
         return pred
 
     def score(self, user_idx, item_idx):
-        pred_vector = self.rl(user_idx, item_idx)
+        pred_vector = self.gmf(user_idx, item_idx)
         logit = self.logit_layer(pred_vector).squeeze(-1)
         return logit
 
-    def rl(self, user_idx, item_idx):
-        rep_user = self.user_hist_embed_generator(user_idx, item_idx)
-        rep_item = self.item_hist_embed_generator(user_idx, item_idx)
-        pred_vector = rep_user * rep_item
+    def gmf(self, user_idx, item_idx):
+        user_embed_slice = self.user_hist_embed_generator(user_idx, item_idx)
+        item_embed_slice = self.item_hist_embed_generator(user_idx, item_idx)
+        pred_vector = user_embed_slice * item_embed_slice
         return pred_vector
 
     def user_hist_embed_generator(self, user_idx, item_idx):
         # get user vector from interactions
-        user_slice = self.interactions[user_idx, :-1].clone()
+        user_interaction_slice = self.interactions[user_idx, :-1].clone()
 
         # masking target items
-        user_batch = torch.arange(user_idx.size(0))
-        user_slice[user_batch, item_idx] = 0
+        user_idx_batch = torch.arange(user_idx.size(0))
+        user_interaction_slice[user_idx_batch, item_idx] = 0
 
         # projection
-        proj_user = self.proj_u(user_slice.float())
+        user_proj_slice = self.proj_u(user_interaction_slice.float())
 
         # representation learning
-        rep_user = self.mlp_u(proj_user)
+        user_rep_slice = self.rep_u(user_proj_slice)
 
-        return rep_user
+        return user_rep_slice
 
     def item_hist_embed_generator(self, user_idx, item_idx):
         # get item vector from interactions
-        item_slice = self.interactions.T[item_idx, :-1].clone()
+        item_interaction_slice = self.interactions.T[item_idx, :-1].clone()
 
         # masking target users
-        item_batch = torch.arange(item_idx.size(0))
-        item_slice[item_batch, user_idx] = 0
+        item_idx_batch = torch.arange(item_idx.size(0))
+        item_interaction_slice[item_idx_batch, user_idx] = 0
 
         # projection
-        proj_item = self.proj_i(item_slice.float())
+        item_proj_slice = self.proj_i(item_interaction_slice.float())
 
         # representation learning
-        rep_item = self.mlp_i(proj_item)
+        item_rep_slice = self.rep_i(item_proj_slice)
 
-        return rep_item
+        return item_rep_slice
 
     def _set_up_components(self):
-        self._create_embeddings()
         self._create_layers()
 
-    def _create_embeddings(self):
+    def _create_layers(self):
         kwargs = dict(
             in_features=self.n_items,
             out_features=self.hidden[0],
@@ -118,12 +117,11 @@ class Module(nn.Module):
         )
         self.proj_i = nn.Linear(**kwargs)
 
-    def _create_layers(self):
         components = list(self._yield_layers(self.hidden))
-        self.mlp_u = nn.Sequential(*components)
+        self.rep_u = nn.Sequential(*components)
 
         components = list(self._yield_layers(self.hidden))
-        self.mlp_i = nn.Sequential()
+        self.rep_i = nn.Sequential()
 
         kwargs = dict(
             in_features=self.hidden[-1],

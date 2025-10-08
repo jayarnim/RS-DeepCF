@@ -62,8 +62,8 @@ class Module(nn.Module):
         return pred
 
     def score(self, user_idx, item_idx):
-        pred_vector_rl = self.rl.rl(user_idx, item_idx)
-        pred_vector_ml = self.ml.ml(user_idx, item_idx)
+        pred_vector_rl = self.rl.gmf(user_idx, item_idx)
+        pred_vector_ml = self.ml.ncf(user_idx, item_idx)
 
         kwargs = dict(
             tensors=(pred_vector_rl, pred_vector_ml), 

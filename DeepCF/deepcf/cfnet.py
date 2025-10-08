@@ -83,21 +83,17 @@ class Module(nn.Module):
         kwargs = dict(
             n_users=self.n_users,
             n_items=self.n_items,
+            dropout=self.dropout,
+            interactions=self.interactions,
+        )
+        self.rl = rlnet.Module(
+            **kwargs,
             hidden=self.hidden_rl,
-            dropout=self.dropout,
-            interactions=self.interactions,
         )
-        self.rl = rlnet.Module(**kwargs)
-
-        kwargs = dict(
-            n_users=self.n_users,
-            n_items=self.n_items,
-            n_factors=self.n_factors,
+        self.ml = mlnet.Module(
+            **kwargs,
             hidden=self.hidden_ml,
-            dropout=self.dropout,
-            interactions=self.interactions,
         )
-        self.ml = mlnet.Module(**kwargs)
 
     def _create_layers(self):
         kwargs = dict(

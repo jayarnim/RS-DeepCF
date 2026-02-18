@@ -1,0 +1,9 @@
+rlnet:
+    projection_dim: 128
+    hidden_dim: [64, 32, 16]
+    dropout: 0.2
+
+mlnet:
+    projection_dim: 32
+    hidden_dim: [64, 32, 16]
+    dropout: 0.2
